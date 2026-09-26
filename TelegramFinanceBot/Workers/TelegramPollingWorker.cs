@@ -14,9 +14,24 @@ public sealed class TelegramPollingWorker(
     private readonly TelegramUpdateHandler _updateHandler = updateHandler;
     private readonly ILogger<TelegramPollingWorker> _logger = logger;
 
-    protected override Task ExecuteAsync(CancellationToken stoppingToken)
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        throw new NotImplementedException();
+        ReceiverOptions receiverOptions = new()
+        {
+            AllowedUpdates = [UpdateType.Message],
+            DropPendingUpdates = true
+        };
+
+        _logger.LogInformation("Starting Telegram polling worker...");
+
+        _botClient.StartReceiving(
+            updateHandler: _updateHandler.HandleAsync,
+            errorHandler: HandleErrorAsync,
+            receiverOptions: receiverOptions,
+            cancellationToken: stoppingToken
+        );
+
+        await Task.Delay(Timeout.Infinite, stoppingToken);
     }
 
     private Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
