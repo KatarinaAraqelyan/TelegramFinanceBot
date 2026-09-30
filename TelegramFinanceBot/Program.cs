@@ -1,37 +1,50 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Telegram.Bot;
 using TelegramFinanceBot.Configuration;
-using TelegramFinanceBot.Workers;
+using TelegramFinanceBot.Data;
+using TelegramFinanceBot.Repositories;
 using TelegramFinanceBot.Telegram;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.Configure<TelegramOptions>(
-    builder.Configuration.GetSection(TelegramOptions.SectionName));
+builder.Services.AddOptions<TelegramOptions>()
+    .Bind(builder.Configuration.GetSection(TelegramOptions.SectionName))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
+builder.Services.AddOptions<PublicUrlOptions>()
+    .Bind(builder.Configuration)
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
+builder.Services.AddDbContext<AppDbContext>(dbOptions =>
+    dbOptions.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
+
+builder.Services.AddSingleton(TimeProvider.System);
 
 builder.Services.AddSingleton<ITelegramBotClient>(serviceProvider =>
 {
-    var options = serviceProvider
-        .GetRequiredService<IOptions<TelegramOptions>>()
-        .Value;
+    var telegramOptions = serviceProvider.GetRequiredService<IOptions<TelegramOptions>>().Value;
 
-    if (string.IsNullOrWhiteSpace(options.BotToken))
-    {
-        throw new InvalidOperationException(
-            "Telegram bot token is not configured.");
-    }
-
-    return new TelegramBotClient(options.BotToken);
+    return new TelegramBotClient(telegramOptions.BotToken);
 });
 
 builder.Services.AddSingleton<TelegramMessageSender>();
-builder.Services.AddSingleton<TelegramUpdateHandler>();
 
-builder.Services.AddHostedService<TelegramPollingWorker>();
+builder.Services.AddScoped<IChatRepository, ChatRepository>();
+builder.Services.AddScoped<ISpendingRepository, SpendingRepository>();
+
+builder.Services.AddScoped<TelegramUpdateHandler>();
 
 builder.Services.AddControllers();
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.EnsureCreated();
+}
 
 app.MapControllers();
 

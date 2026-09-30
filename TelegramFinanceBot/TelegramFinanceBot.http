@@ -1,6 +1,15 @@
-@TelegramFinanceBot_HostAddress = http://localhost:5108
+@Host = http://localhost:5108
 
-GET {{TelegramFinanceBot_HostAddress}}/weatherforecast/
-Accept: application/json
+GET {{Host}}/report/unknown-token
+
+###
+
+POST {{Host}}/telegram/webhook
+Content-Type: application/json
+X-Telegram-Bot-Api-Secret-Token: your-webhook-secret
+
+{
+  "update_id": 1
+}
 
 ###
