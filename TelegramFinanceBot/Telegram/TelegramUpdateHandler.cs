@@ -1,42 +1,30 @@
-﻿using Telegram.Bot;
-using Telegram.Bot.Types;
+﻿using Telegram.Bot.Types;
+using TelegramFinanceBot.Telegram.Commands;
 
 namespace TelegramFinanceBot.Telegram;
 
-public sealed class TelegramUpdateHandler(TelegramMessageSender messageSender)
+public sealed class TelegramUpdateHandler(TelegramMessageSender sender, CommandRouter router)
 {
-    private readonly TelegramMessageSender _messageSender = messageSender;
-
-    public async Task HandleAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
+    public async Task HandleAsync(Update update, CancellationToken cancellationToken)
     {
-        if (update.Message is null || string.IsNullOrWhiteSpace(update.Message.Text))
+        var message = update.Message;
+
+        if (message?.Text is null)
         {
             return;
         }
 
-        var chatId = update.Message.Chat.Id;
-        var text = update.Message.Text.Trim();
+        var text = message.Text.Trim();
 
-        string responseText;
+        if (text.Length == 0)
+        {
+            return;
+        }
 
-        if (text == "/start")
-        {
-            responseText =
-                "Hello! 👋\n\n" +
-                "I'm your personal finance consultant. 💰\n\n" +
-                "Send me your spending in this format:\n" +
-                "<amount> <category> [note]\n\n" +
-                "Examples:\n" +
-                "4.50 coffee\n" +
-                "32.10 groceries lidl\n" +
-                "120 rent\n\n" +
-                "I'll help you track your spending and give you daily and monthly summaries.";
-        }
-        else
-        {
-            responseText = $"We received your message: {text}";
-        }
-        await _messageSender.SendAsync(chatId, responseText, cancellationToken);
+        var chatId = message.Chat.Id;
+        var handler = router.Resolve(text);
+        var reply = await handler.HandleAsync(new CommandContext(chatId, text), cancellationToken);
+
+        await sender.SendAsync(chatId, reply, cancellationToken);
     }
-    
 }
