@@ -15,6 +15,6 @@ public sealed class SpendingCommandHandler(
         // Needed:
         // GetChatByTelegramIdQuery
         // AddSpendingCommand
-        return string.Empty;
+        return string.Empty; // placeholder
     }
 }
