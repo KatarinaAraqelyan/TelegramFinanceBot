@@ -15,6 +15,6 @@ public sealed class MonthCommandHandler(
         // Needed:
         // GetChatByTelegramIdQuery
         // GetSummaryQuery
-        return string.Empty;
+        return string.Empty; // placeholder
     }
 }

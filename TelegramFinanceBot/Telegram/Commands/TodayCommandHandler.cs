@@ -11,6 +11,6 @@ public sealed class TodayCommandHandler(IDispatcher dispatcher, MessageTextBuild
         // Needed:
         // GetChatByTelegramIdQuery
         // GetTodayQuery
-        return string.Empty;
+        return string.Empty; // placeholder
     }
 }

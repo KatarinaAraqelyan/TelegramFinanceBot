@@ -8,7 +8,7 @@ using TelegramFinanceBot.Repositories;
 using TelegramFinanceBot.Services;
 using TelegramFinanceBot.Telegram;
 using TelegramFinanceBot.Telegram.Commands;
-// using TelegramFinanceBot.Workers;
+using TelegramFinanceBot.Workers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -54,6 +54,9 @@ builder.Services.RegisterCommand<TodayCommandHandler>(CommandKeys.Today);
 builder.Services.RegisterCommand<MonthCommandHandler>(CommandKeys.Month);
 builder.Services.RegisterCommand<SpendingCommandHandler>(CommandKeys.Spending);
 builder.Services.RegisterCommand<UnknownCommandHandler>(CommandKeys.Unknown);
+
+builder.Services.AddHostedService<WebhookRegistrationWorker>();
+builder.Services.AddHostedService<DailyDigestWorker>();
 
 builder.Services.AddControllers();
 
