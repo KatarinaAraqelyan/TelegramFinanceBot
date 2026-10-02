@@ -22,8 +22,15 @@ builder.Services.AddOptions<PublicUrlOptions>()
     .ValidateDataAnnotations()
     .ValidateOnStart();
 
-builder.Services.AddDbContext<AppDbContext>(dbOptions =>
-    dbOptions.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
+var connectionString = builder.Configuration.GetConnectionString("Default");
+
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    throw new InvalidOperationException(
+        "ConnectionStrings:Default is not configured. Set it with dotnet user-secrets or an environment variable.");
+}
+
+builder.Services.AddDbContext<AppDbContext>(dbOptions => dbOptions.UseNpgsql(connectionString));
 
 builder.Services.AddSingleton(TimeProvider.System);
 
@@ -38,7 +45,6 @@ builder.Services.AddSingleton<TelegramMessageSender>();
 builder.Services.AddSingleton<MessageTextBuilder>();
 builder.Services.AddSingleton<ISpendingParser, SpendingParser>();
 builder.Services.AddSingleton<IReportLinkBuilder, ReportLinkBuilder>();
-builder.Services.AddSingleton<IReportRenderer, ReportHtmlRenderer>();
 
 builder.Services.AddScoped<IChatRepository, ChatRepository>();
 builder.Services.AddScoped<ISpendingRepository, SpendingRepository>();
@@ -58,7 +64,7 @@ builder.Services.RegisterCommand<UnknownCommandHandler>(CommandKeys.Unknown);
 builder.Services.AddHostedService<WebhookRegistrationWorker>();
 builder.Services.AddHostedService<DailyDigestWorker>();
 
-builder.Services.AddControllers();
+builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
 
@@ -67,6 +73,7 @@ using (var scope = app.Services.CreateScope())
     scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.EnsureCreated();
 }
 
+app.UseStaticFiles();
 app.MapControllers();
 
 await app.RunAsync();

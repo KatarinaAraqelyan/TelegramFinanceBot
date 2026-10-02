@@ -1,0 +1,90 @@
+@using System.Globalization
+@model ReportViewModel
+@{
+    ViewData["Title"] = "Spending report";
+    var summary = Model.Report.Summary;
+    var currency = Model.Currency;
+}
+
+<h2>Spending report</h2>
+
+<div class="cards">
+    <div class="card">
+        <div class="label">This month</div>
+        <div class="value">@MoneyFormatter.Format(summary.MonthTotal) @currency</div>
+        <div class="hint">@summary.MonthCount entries</div>
+    </div>
+    <div class="card">
+        <div class="label">Last 7 days</div>
+        <div class="value">@MoneyFormatter.Format(summary.Last7DaysTotal) @currency</div>
+    </div>
+    <div class="card">
+        <div class="label">Previous 7 days</div>
+        <div class="value">@MoneyFormatter.Format(summary.Previous7DaysTotal) @currency</div>
+    </div>
+    <div class="card">
+        <div class="label">Typical day</div>
+        <div class="value">@MoneyFormatter.Format(summary.TypicalDay) @currency</div>
+        <div class="hint">month total / days elapsed</div>
+    </div>
+</div>
+
+<h3>Categories this month</h3>
+@if (summary.Categories.Count == 0)
+{
+    <p class="muted">No spendings this month.</p>
+}
+else
+{
+    <div class="scroll">
+        <table class="tbl">
+            <tr><th>Category</th><th class="num">Total</th><th class="num">Share</th></tr>
+            @foreach (var category in summary.Categories)
+            {
+                var share = summary.MonthTotal > 0 ? category.Total / summary.MonthTotal * 100 : 0m;
+                <tr>
+                    <td>@category.Category</td>
+                    <td class="num">@MoneyFormatter.Format(category.Total) @currency</td>
+                    <td class="num">@share.ToString("0.0", CultureInfo.InvariantCulture)%</td>
+                </tr>
+            }
+        </table>
+    </div>
+}
+
+<h3>Last 14 days (UTC)</h3>
+<div class="scroll">
+    <table class="tbl">
+        <tr><th>Date</th><th class="num">Total</th></tr>
+        @foreach (var day in Model.Report.Days.OrderByDescending(d => d.Date))
+        {
+            <tr>
+                <td>@day.Date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)</td>
+                <td class="num">@MoneyFormatter.Format(day.Total) @currency</td>
+            </tr>
+        }
+    </table>
+</div>
+
+<h3>Last 20 spendings (UTC)</h3>
+@if (Model.Report.Latest.Count == 0)
+{
+    <p class="muted">No spendings yet.</p>
+}
+else
+{
+    <div class="scroll">
+        <table class="tbl">
+            <tr><th>Date</th><th class="num">Amount</th><th>Category</th><th>Note</th></tr>
+            @foreach (var item in Model.Report.Latest)
+            {
+                <tr>
+                    <td>@item.SpentAt.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture)</td>
+                    <td class="num">@MoneyFormatter.Format(item.Amount) @currency</td>
+                    <td>@item.Category</td>
+                    <td>@item.Note</td>
+                </tr>
+            }
+        </table>
+    </div>
+}
