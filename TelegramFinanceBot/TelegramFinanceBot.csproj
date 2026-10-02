@@ -13,10 +13,4 @@
         <PackageReference Include="Telegram.Bot" Version="22.10.3.2" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Application\Chats\" />
-      <Folder Include="Application\Common\" />
-      <Folder Include="Application\Spendings\" />
-    </ItemGroup>
-
 </Project>

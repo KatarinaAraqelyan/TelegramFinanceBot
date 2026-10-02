@@ -61,7 +61,19 @@ builder.Services.RegisterCommand<MonthCommandHandler>(CommandKeys.Month);
 builder.Services.RegisterCommand<SpendingCommandHandler>(CommandKeys.Spending);
 builder.Services.RegisterCommand<UnknownCommandHandler>(CommandKeys.Unknown);
 
-builder.Services.AddHostedService<WebhookRegistrationWorker>();
+var updateMode = builder.Configuration.GetValue(
+    $"{TelegramOptions.SectionName}:{nameof(TelegramOptions.UpdateMode)}",
+    TelegramUpdateMode.Polling);
+
+if (updateMode == TelegramUpdateMode.Webhook)
+{
+    builder.Services.AddHostedService<WebhookRegistrationWorker>();
+}
+else
+{
+    builder.Services.AddHostedService<TelegramPollingWorker>();
+}
+
 builder.Services.AddHostedService<DailyDigestWorker>();
 
 builder.Services.AddControllersWithViews();
