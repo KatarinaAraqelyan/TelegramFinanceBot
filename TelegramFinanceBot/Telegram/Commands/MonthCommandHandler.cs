@@ -1,6 +1,6 @@
 using TelegramFinanceBot.Application.Abstractions;
-// using TelegramFinanceBot.Application.Chats;
-// using TelegramFinanceBot.Application.Spendings;
+using TelegramFinanceBot.Application.Chats;
+using TelegramFinanceBot.Application.Spendings;
 using TelegramFinanceBot.Services;
 
 namespace TelegramFinanceBot.Telegram.Commands;
@@ -12,9 +12,20 @@ public sealed class MonthCommandHandler(
 {
     public async Task<string> HandleAsync(CommandContext context, CancellationToken cancellationToken)
     {
-        // Needed:
-        // GetChatByTelegramIdQuery
-        // GetSummaryQuery
-        return string.Empty; // placeholder
+        var chat = await dispatcher.QueryAsync(new GetChatByTelegramIdQuery(context.ChatId), cancellationToken);
+
+        if (chat is null)
+        {
+            return texts.StartFirst();
+        }
+
+        var summary = await dispatcher.QueryAsync(new GetSummaryQuery(chat.Id), cancellationToken);
+
+        if (summary.MonthCount == 0)
+        {
+            return texts.NoSpendingsThisMonth();
+        }
+
+        return texts.Recap(summary, links.Build(chat.ReportToken));
     }
 }

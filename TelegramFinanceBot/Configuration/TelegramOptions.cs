@@ -18,4 +18,6 @@ public sealed class TelegramOptions
 
     [Range(0, 23)]
     public int DigestHourUtc { get; set; } = 18;
+    
+    public TelegramUpdateMode UpdateMode { get; set; } = TelegramUpdateMode.Polling;
 }

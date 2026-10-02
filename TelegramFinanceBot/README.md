@@ -1,52 +1,69 @@
-## Telegram Bot API Setup
+# TelegramFinanceBot
 
-This project uses the Telegram Bot API to communicate with Telegram.
+A Telegram bot that tracks your spendings and sends you a daily recap.
 
-### 1. Create a Telegram Bot
+Send a spending as a message, for example `4.50 coffee`. The bot saves it, and every day
+it sends a short summary with a link to a detailed web report.
 
-Open **@BotFather** in Telegram and send:
+## Commands
 
-```text
-/newbot
-```
+| Command | What it does |
+|---|---|
+| `/start` | Registers the chat and explains the format |
+| `/today` | Today's total and list |
+| `/month` | This month's recap with a link to the full report |
+| `<amount> <category> [note]` | Saves a spending, e.g. `32.10 groceries lidl` |
 
-Follow the instructions to create a bot.
+## Daily recap
 
-At the end, BotFather will provide a **Bot Token**.
+Once a day at a configured UTC hour, every chat with spendings this month gets:
 
-> ⚠️ Keep the token private. Do not commit it to GitHub or put it directly in the source code.
+- month total and number of entries
+- last 7 days and previous 7 days
+- typical day (month total ÷ days passed)
+- top 3 categories
+- a link to the full report
 
-### 2. Configure the Bot Token
+The report page (`/report/{token}`) also shows all categories, the last 14 days
+and the last 20 spendings.
 
-This project uses **ASP.NET Core User Secrets** for local development.
+## Tech stack
 
-From the folder containing the `.csproj` file, run:
+.NET 10 · ASP.NET Core · Telegram.Bot (webhook) · PostgreSQL + EF Core · Razor · ngrok
 
-```bash
-dotnet user-secrets init
-```
+## How to run
 
-Then add your own Bot Token:
+You need: .NET 10 SDK, Docker, ngrok, and a bot token from [@BotFather](https://t.me/BotFather).
 
-```bash
-dotnet user-secrets set "Telegram:BotToken" "YOUR_BOT_TOKEN"
-```
+**1. Start the database**
 
-Replace `YOUR_BOT_TOKEN` with the token you received from BotFather.
+    docker run -d --name financebot-db -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=financebot -p 5432:5432 postgres:16
 
-You can check that it was saved with:
+**2. Start ngrok** in a separate terminal and copy the `https://...` address
 
-```bash
-dotnet user-secrets list
-```
+    ngrok http 5108
 
-### 3. Run the Project
+**3. Set secrets** from the folder with `TelegramFinanceBot.csproj`
 
-After configuring the token:
+    cd TelegramFinanceBot
+    dotnet user-secrets set "ConnectionStrings:Default" "Host=localhost;Port=5432;Database=financebot;Username=postgres;Password=postgres"
+    dotnet user-secrets set "Telegram:BotToken" "<your bot token>"
+    dotnet user-secrets set "Telegram:WebhookSecret" "$(openssl rand -hex 32)"
+    dotnet user-secrets set "PublicBaseUrl" "https://<your-address>.ngrok-free.app"
 
-```bash
-dotnet restore
-dotnet run
-```
+**4. Run**
 
-The application will start the Telegram bot using long polling.
+    dotnet run --launch-profile http
+
+Then send `/start` to your bot.
+
+## Settings
+
+Currency and digest hour are in `appsettings.json`:
+
+    "Telegram": {
+      "Currency": "AMD",
+      "DigestHourUtc": 18
+    }
+
+Never commit your bot token. It belongs in user-secrets only.

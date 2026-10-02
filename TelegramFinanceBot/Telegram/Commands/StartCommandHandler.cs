@@ -1,5 +1,5 @@
 using TelegramFinanceBot.Application.Abstractions;
-// using TelegramFinanceBot.Application.Chats;
+using TelegramFinanceBot.Application.Chats;
 
 namespace TelegramFinanceBot.Telegram.Commands;
 
@@ -7,9 +7,7 @@ public sealed class StartCommandHandler(IDispatcher dispatcher, MessageTextBuild
 {
     public async Task<string> HandleAsync(CommandContext context, CancellationToken cancellationToken)
     {
-        // Needed:
-        // StartChatCommand
-        // await dispatcher.SendAsync(new StartChatCommand(context.ChatId), cancellationToken);
+        await dispatcher.SendAsync(new StartChatCommand(context.ChatId), cancellationToken);
 
         return texts.Start();
     }
